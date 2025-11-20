@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       data: {
         description,
         imageUrl,
-      },
+      }
     });
 
     return NextResponse.json(post);
@@ -43,6 +43,72 @@ export async function POST(request: Request) {
     console.error('Error creating post:', error);
     return NextResponse.json(
       { error: 'Failed to create post' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { id, description } = await request.json();
+    
+    if (!id || !description) {
+      return NextResponse.json(
+        { error: 'Post ID and description are required' },
+        { status: 400 }
+      );
+    }
+    
+    const updatedPost = await prisma.post.update({
+      where: { id: Number(id) },
+      data: { description },
+    });
+
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    return NextResponse.json(
+      { error: 'Failed to update post' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Post ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    // First get the post to get the image URL
+    const post = await prisma.post.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!post) {
+      return NextResponse.json(
+        { error: 'Post not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the post
+    await prisma.post.delete({
+      where: { id: Number(id) },
+    });
+
+    // Return the deleted post data which includes the imageUrl
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete post' },
       { status: 500 }
     );
   }
