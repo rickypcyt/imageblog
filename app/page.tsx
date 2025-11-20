@@ -274,67 +274,40 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(200px,auto)]">
-              {posts.map((post) => (
-                    <div 
-                      key={post.id} 
-                      className="group relative rounded-lg overflow-hidden bg-white dark:bg-zinc-800 shadow-sm w-full h-full min-h-[200px] cursor-pointer"
-                      onClick={() => setSelectedPost(post)}
-                      style={{ gridRowEnd: 'span 2' }}
-                    >
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={post.imageUrl}
-                          alt={post.description}
-                          fill
-                          className="object-cover w-full h-full"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          onLoad={(e) => {
-                            // Auto-adjust grid row span based on image aspect ratio
-                            const img = e.target as HTMLImageElement;
-                            const aspectRatio = img.naturalWidth / img.naturalHeight;
-                            const rowSpan = aspectRatio > 1.5 ? 2 : 1;
-                            img.closest('div[style*="grid-row-end"]')?.setAttribute('style', `grid-row-end: span ${rowSpan};`);
-                          }}
-                        />
+            <div className="w-full px-2">
+              <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 [direction:rtl] max-w-[2000px] mx-auto">
+                {[...posts].reverse().map((post) => (
+                  <div 
+                    key={post.id} 
+                    className="group relative overflow-hidden w-full cursor-pointer flex items-center justify-center"
+                    onClick={() => setSelectedPost(post)}
+                    style={{ minHeight: '200px' }}
+                  >
+                    <div className="relative w-full flex items-center justify-center">
+                      <Image
+                        src={post.imageUrl}
+                        alt={post.description}
+                        width={800}
+                        height={600}
+                        className="max-w-full max-h-full object-contain rounded-none"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                      
+                      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="w-full text-white text-sm text-center bg-black/50 px-2 py-1">
+                          {post.description}
+                        </div>
+                      </div>
+                    </div>
                     
-                    <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className="w-full text-white text-sm text-center bg-black/50 px-2 py-1 rounded">
-                        {post.description}
-                      </div>
-                    </div>
+                    
                   </div>
-                  
-                  <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditing(post);
-                      }}
-                      className="p-2 bg-white/80 dark:bg-zinc-700/80 rounded-full hover:bg-white dark:hover:bg-zinc-600 transition-colors"
-                      title="Edit post"
-                    >
-                      <Edit className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePost(post.id);
-                          }}
-                          disabled={isDeleting}
-                          className="p-2 bg-white/80 dark:bg-zinc-700/80 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
-                          title="Delete post"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
-
       {/* Edit Modal */}
       {editingPost && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
@@ -439,6 +412,30 @@ export default function Home() {
                 <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-4">
                   Posted on {new Date(selectedPost.createdAt).toLocaleString()}
                 </p>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPost(null);
+                      startEditing(selectedPost);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors flex items-center gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePost(selectedPost.id);
+                    }}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
