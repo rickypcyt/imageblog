@@ -61,30 +61,52 @@ function ImagePreviewModal({
 }) {
   return (
     <Modal onClose={onClose}>
-      <div className="bg-white dark:bg-zinc-800 rounded-lg max-w-2xl w-full p-6">
+      <div className="bg-white dark:bg-zinc-800 rounded-xl w-full max-w-4xl mx-2 sm:mx-4 p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Add Description</h3>
+          <h2 className="text-xl font-semibold">Add Description</h2>
           <CloseButton onClick={onClose} />
         </div>
-        <div className="relative w-full h-64 md:h-96 mb-4 rounded-lg overflow-hidden">
-          <Image src={imagePreview} alt="Preview" fill className="object-contain bg-zinc-100 dark:bg-zinc-700" />
+        
+        <div className="w-full mb-6">
+          <div className="relative w-full aspect-square max-h-[60vh] rounded-lg overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+            <Image 
+              src={imagePreview} 
+              alt="Preview" 
+              fill 
+              className="object-contain p-2" 
+              sizes="(max-width: 768px) 100vw, 60vw"
+              priority
+            />
+          </div>
         </div>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+
+        <form onSubmit={onSubmit} className="w-full">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              Description
+            </label>
             <textarea
               value={description}
               onChange={(e) => onDescriptionChange(e.target.value)}
-              className="w-full p-3 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
+              className="w-full p-3 text-sm border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
               placeholder="Enter a description for your image..."
               autoFocus
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors">
+          
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={!description.trim() || isLoading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <button 
+              type="submit" 
+              disabled={!description.trim() || isLoading} 
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {isLoading ? 'Posting...' : 'Post Image'}
             </button>
           </div>
@@ -225,6 +247,7 @@ function PostsGrid({ posts, onPostClick }: { posts: Post[]; onPostClick: (post: 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -257,52 +280,66 @@ export default function Home() {
   useEffect(() => {
     return () => {
       if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview(null);
     };
   }, [imagePreview]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !imagePreview) return;
+    if (!description.trim() || !imageFile || !imagePreview) return;
+    
     setIsLoading(true);
+    
     try {
+      // First upload the image
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      const uploadRes = await fetch('/api/upload', { 
+        method: 'POST', 
+        body: formData 
+      });
+      
+      if (!uploadRes.ok) throw new Error('Failed to upload image');
+      const { url } = await uploadRes.json();
+
+      // Then create the post with the image URL
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, imageUrl: imagePreview }),
+        body: JSON.stringify({ description, imageUrl: url }),
       });
+      
       if (res.ok) {
         setDescription('');
+        // Cleanup the blob URL
+        if (imagePreview.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreview);
+        }
+        // Only clear the preview and file after successful upload
         setImagePreview(null);
+        setImageFile(null);
         await fetchPosts();
       }
     } catch (err) {
       console.error('Error creating post:', err);
+      alert('Failed to create post. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleImagePaste = useCallback(async (file: File) => {
-    if (isUploading) return;
-    setIsUploading(true);
+    // Clean up any existing preview URL
+    if (imagePreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    
     const objectUrl = URL.createObjectURL(file);
     setImagePreview(objectUrl);
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Failed to upload image');
-      const data = await res.json();
-      setImagePreview(data.url);
-    } catch (err) {
-      console.error('Error uploading image:', err);
-      alert('Failed to upload image. Please try again.');
-      URL.revokeObjectURL(objectUrl);
-      setImagePreview(null);
-    } finally {
-      setIsUploading(false);
-    }
-  }, [isUploading]);
+    setImageFile(file);
+    return Promise.resolve();
+  }, [imagePreview]);
 
   const handleUpdatePost = async () => {
     if (!editingPost || !editDescription.trim()) return;
@@ -373,7 +410,13 @@ export default function Home() {
           isLoading={isLoading}
           onDescriptionChange={setDescription}
           onSubmit={handleSubmit}
-          onClose={() => setImagePreview(null)}
+          onClose={() => {
+            if (imagePreview?.startsWith('blob:')) {
+              URL.revokeObjectURL(imagePreview);
+            }
+            setImagePreview(null);
+            setImageFile(null);
+          }}
         />
       )}
 

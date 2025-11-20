@@ -29,6 +29,16 @@ export default function ImagePasteHandler({ onImagePaste, children }: ImagePaste
   }, [onImagePaste]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
+    // Check if the drag contains an image element from our UI
+    const isImageFromUI = e.dataTransfer.types.includes('text/html') && 
+                         e.dataTransfer.getData('text/html').includes('<img');
+    
+    if (isImageFromUI) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
@@ -44,6 +54,14 @@ export default function ImagePasteHandler({ onImagePaste, children }: ImagePaste
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+
+    // Check if the drop contains an image element from our UI
+    const isImageFromUI = e.dataTransfer.types.includes('text/html') && 
+                         e.dataTransfer.getData('text/html').includes('<img');
+    
+    if (isImageFromUI) {
+      return; // Ignore drops of images from our own UI
+    }
 
     const files = e.dataTransfer.files;
     if (files.length > 0) {
