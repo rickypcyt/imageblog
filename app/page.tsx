@@ -14,7 +14,11 @@ interface Post {
   createdAt: string;
 }
 
-// Modal wrapper component
+interface PendingImage {
+  file: File;
+  preview: string;
+}
+
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -23,21 +27,14 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 }
 
-// Close button component
 function CloseButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-      aria-label="Close"
-    >
+    <button onClick={onClick} disabled={disabled} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" aria-label="Close">
       <X className="h-5 w-5" />
     </button>
   );
 }
 
-// Loading spinner component
 function Spinner() {
   return (
     <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -47,12 +44,11 @@ function Spinner() {
   );
 }
 
-// Image preview modal for new posts
 function ImagePreviewModal({
-  imagePreview, description, isLoading,
+  preview, description, isLoading,
   onDescriptionChange, onSubmit, onClose
 }: {
-  imagePreview: string;
+  preview: string;
   description: string;
   isLoading: boolean;
   onDescriptionChange: (val: string) => void;
@@ -66,25 +62,19 @@ function ImagePreviewModal({
           <h2 className="text-xl font-semibold">Add Description</h2>
           <CloseButton onClick={onClose} />
         </div>
-        
         <div className="w-full mb-6">
           <div className="relative w-full aspect-square max-h-[60vh] rounded-lg overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-            <Image 
-              src={imagePreview} 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={preview} 
               alt="Preview" 
-              fill 
-              className="object-contain p-2" 
-              sizes="(max-width: 768px) 100vw, 60vw"
-              priority
+              className="w-full h-full object-contain p-2"
             />
           </div>
         </div>
-
         <form onSubmit={onSubmit} className="w-full">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Description</label>
             <textarea
               value={description}
               onChange={(e) => onDescriptionChange(e.target.value)}
@@ -93,21 +83,12 @@ function ImagePreviewModal({
               autoFocus
             />
           </div>
-          
           <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors">
               Cancel
             </button>
-            <button 
-              type="submit" 
-              disabled={!description.trim() || isLoading} 
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Posting...' : 'Post Image'}
+            <button type="submit" disabled={!description.trim() || isLoading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+              {isLoading ? <><Spinner /> Posting...</> : 'Post Image'}
             </button>
           </div>
         </form>
@@ -116,16 +97,8 @@ function ImagePreviewModal({
   );
 }
 
-// Edit post modal
-function EditModal({
-  description, isUpdating,
-  onDescriptionChange, onSave, onClose
-}: {
-  description: string;
-  isUpdating: boolean;
-  onDescriptionChange: (val: string) => void;
-  onSave: () => void;
-  onClose: () => void;
+function EditModal({ description, isUpdating, onDescriptionChange, onSave, onClose }: {
+  description: string; isUpdating: boolean; onDescriptionChange: (val: string) => void; onSave: () => void; onClose: () => void;
 }) {
   return (
     <Modal onClose={onClose}>
@@ -136,17 +109,10 @@ function EditModal({
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => onDescriptionChange(e.target.value)}
-            className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
-            disabled={isUpdating}
-          />
+          <textarea value={description} onChange={(e) => onDescriptionChange(e.target.value)} className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]" disabled={isUpdating} />
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} disabled={isUpdating} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50">
-            Cancel
-          </button>
+          <button onClick={onClose} disabled={isUpdating} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors disabled:opacity-50">Cancel</button>
           <button onClick={onSave} disabled={isUpdating || !description.trim()} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2">
             {isUpdating ? <><Spinner /> Saving...</> : <><Save className="w-4 h-4" /> Save Changes</>}
           </button>
@@ -156,16 +122,8 @@ function EditModal({
   );
 }
 
-// Post detail modal
-function PostDetailModal({
-  post, isDeleting,
-  onEdit, onDelete, onClose
-}: {
-  post: Post;
-  isDeleting: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-  onClose: () => void;
+function PostDetailModal({ post, isDeleting, onEdit, onDelete, onClose }: {
+  post: Post; isDeleting: boolean; onEdit: () => void; onDelete: () => void; onClose: () => void;
 }) {
   return (
     <Modal onClose={onClose}>
@@ -196,7 +154,6 @@ function PostDetailModal({
   );
 }
 
-// Post grid item
 function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
   return (
     <div className="group relative overflow-hidden w-full cursor-pointer flex items-center justify-center" onClick={onClick} style={{ minHeight: '200px' }}>
@@ -210,7 +167,6 @@ function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
   );
 }
 
-// Loading skeleton
 function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -221,23 +177,23 @@ function LoadingSkeleton() {
   );
 }
 
-// Empty state
 function EmptyState() {
   return (
     <div className="text-center py-12">
       <p className="text-zinc-500 dark:text-zinc-400 text-lg mb-4">Your library is empty</p>
-      <p className="text-zinc-400 dark:text-zinc-500 text-sm">Paste an image or click the upload button to get started</p>
+      <p className="text-zinc-400 dark:text-zinc-500 text-sm">Paste an image to get started</p>
     </div>
   );
 }
 
-// Posts grid
 function PostsGrid({ posts, onPostClick }: { posts: Post[]; onPostClick: (post: Post) => void }) {
   return (
     <div className="w-full px-2">
-      <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 [direction:rtl] max-w-[2000px] mx-auto">
+      <div className="flex flex-wrap justify-start gap-2 max-w-[2000px] mx-auto">
         {[...posts].reverse().map((post) => (
-          <PostCard key={post.id} post={post} onClick={() => onPostClick(post)} />
+          <div key={post.id} className="w-[calc(50%-0.25rem)] sm:w-full md:w-[calc(50%-0.25rem)] lg:w-[calc(25%-0.5rem)]">
+            <PostCard post={post} onClick={() => onPostClick(post)} />
+          </div>
         ))}
       </div>
     </div>
@@ -247,10 +203,7 @@ function PostsGrid({ posts, onPostClick }: { posts: Post[]; onPostClick: (post: 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [description, setDescription] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -258,6 +211,10 @@ export default function Home() {
   const [editDescription, setEditDescription] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Store pending image in a ref to avoid re-renders and cleanup issues
+  const pendingImageRef = useRef<PendingImage | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -277,50 +234,56 @@ export default function Home() {
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
-  useEffect(() => {
-    return () => {
-      if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
-      setImageFile(null);
-      setImagePreview(null);
-    };
-  }, [imagePreview]);
+  const clearPendingImage = useCallback(() => {
+    if (pendingImageRef.current) {
+      URL.revokeObjectURL(pendingImageRef.current.preview);
+      pendingImageRef.current = null;
+    }
+    setDescription('');
+    setShowModal(false);
+  }, []);
+
+  const handleImagePaste = useCallback((file: File) => {
+    // Clear any existing pending image
+    if (pendingImageRef.current) {
+      URL.revokeObjectURL(pendingImageRef.current.preview);
+    }
+    
+    // Create new blob URL and store
+    const preview = URL.createObjectURL(file);
+    pendingImageRef.current = { file, preview };
+    
+    // Show modal
+    setShowModal(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !imageFile || !imagePreview) return;
-    
+    const pending = pendingImageRef.current;
+    if (!description.trim() || !pending) return;
+
     setIsLoading(true);
-    
     try {
-      // First upload the image
+      // Upload the image
       const formData = new FormData();
-      formData.append('image', imageFile);
-      const uploadRes = await fetch('/api/upload', { 
-        method: 'POST', 
-        body: formData 
-      });
+      formData.append('image', pending.file);
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
       
       if (!uploadRes.ok) throw new Error('Failed to upload image');
       const { url } = await uploadRes.json();
 
-      // Then create the post with the image URL
+      // Create the post
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, imageUrl: url }),
+        body: JSON.stringify({ description: description.trim(), imageUrl: url }),
       });
-      
-      if (res.ok) {
-        setDescription('');
-        // Cleanup the blob URL
-        if (imagePreview.startsWith('blob:')) {
-          URL.revokeObjectURL(imagePreview);
-        }
-        // Only clear the preview and file after successful upload
-        setImagePreview(null);
-        setImageFile(null);
-        await fetchPosts();
-      }
+
+      if (!res.ok) throw new Error('Failed to create post');
+
+      // Success - clear form and refresh
+      clearPendingImage();
+      await fetchPosts();
     } catch (err) {
       console.error('Error creating post:', err);
       alert('Failed to create post. Please try again.');
@@ -328,18 +291,6 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
-  const handleImagePaste = useCallback(async (file: File) => {
-    // Clean up any existing preview URL
-    if (imagePreview?.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview);
-    }
-    
-    const objectUrl = URL.createObjectURL(file);
-    setImagePreview(objectUrl);
-    setImageFile(file);
-    return Promise.resolve();
-  }, [imagePreview]);
 
   const handleUpdatePost = async () => {
     if (!editingPost || !editDescription.trim()) return;
@@ -364,7 +315,7 @@ export default function Home() {
   };
 
   const handleDeletePost = async (postId: number) => {
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/posts?id=${postId}`, { method: 'DELETE' });
@@ -403,20 +354,14 @@ export default function Home() {
         </main>
       </ImagePasteHandler>
 
-      {imagePreview && (
+      {showModal && pendingImageRef.current && (
         <ImagePreviewModal
-          imagePreview={imagePreview}
+          preview={pendingImageRef.current.preview}
           description={description}
           isLoading={isLoading}
           onDescriptionChange={setDescription}
           onSubmit={handleSubmit}
-          onClose={() => {
-            if (imagePreview?.startsWith('blob:')) {
-              URL.revokeObjectURL(imagePreview);
-            }
-            setImagePreview(null);
-            setImageFile(null);
-          }}
+          onClose={clearPendingImage}
         />
       )}
 
