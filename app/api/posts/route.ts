@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
     const posts = await prisma.post.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
     return NextResponse.json(posts);
   } catch (error) {
@@ -18,13 +22,22 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { title, content } = await request.json();
+    const { description, imageUrl } = await request.json();
+    
+    if (!description || !imageUrl) {
+      return NextResponse.json(
+        { error: 'Description and imageUrl are required' },
+        { status: 400 }
+      );
+    }
+    
     const post = await prisma.post.create({
-      data: { 
-        title, 
-        content: content || null,
+      data: {
+        description,
+        imageUrl,
       },
     });
+
     return NextResponse.json(post);
   } catch (error) {
     console.error('Error creating post:', error);
