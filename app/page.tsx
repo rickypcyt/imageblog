@@ -188,14 +188,10 @@ function EmptyState() {
 
 function PostsGrid({ posts, onPostClick }: { posts: Post[]; onPostClick: (post: Post) => void }) {
   return (
-    <div className="w-full px-2">
-      <div className="flex flex-wrap justify-start gap-2 max-w-[2000px] mx-auto">
-        {[...posts].reverse().map((post) => (
-          <div key={post.id} className="w-[calc(50%-0.25rem)] sm:w-full md:w-[calc(50%-0.25rem)] lg:w-[calc(25%-0.5rem)]">
-            <PostCard post={post} onClick={() => onPostClick(post)} />
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 max-w-[2000px] mx-auto">
+      {[...posts].reverse().map((post) => (
+        <PostCard key={post.id} post={post} onClick={() => onPostClick(post)} />
+      ))}
     </div>
   );
 }
@@ -339,10 +335,10 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <ImagePasteHandler onImagePaste={handleImagePaste}>
-        <main className="min-h-screen p-4 md:p-8 relative">
+        <main className="min-h-screen relative">
           <WavyBackground />
-          <div className="bg-zinc-50 dark:bg-zinc-900 p-4 sm:p-6">
-            <div className="max-w-7xl mx-auto">
+          <div className="bg-zinc-50 dark:bg-zinc-900">
+            <div className="mx-auto">
               <div className="mb-8" />
               {isFetching ? <LoadingSkeleton /> : error ? (
                 <p className="text-red-500 dark:text-red-400">{error}</p>
